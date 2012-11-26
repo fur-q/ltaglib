@@ -1,4 +1,5 @@
 #include <string.h>
+#include <stdlib.h>
 #include <lua.h>
 #include <lauxlib.h>
 #include <tag_c.h>
@@ -10,10 +11,7 @@ typedef struct AudioData {
 } AudioData;
 
 static int audiodata_index(lua_State *L) {
-  AudioData *ad = (AudioData *)lua_touserdata(L, 1);
-  if (ad == NULL) {
-    return luaL_error(L, "bad argument #1 to 'newindex'");
-  }
+  AudioData *ad = luaL_checkudata(L, 1, "AudioData");
   const char *idx = luaL_checkstring(L, 2);
 
   // tags
@@ -49,32 +47,24 @@ static int audiodata_index(lua_State *L) {
 
 // this seems unnecessarily ugly 
 static int audiodata_newindex(lua_State *L) {
-  AudioData *ad = (AudioData *)lua_touserdata(L, 1);
-  if (ad == NULL) {
-    return luaL_error(L, "bad argument #1 to 'newindex'");
-  }
+  AudioData *ad = luaL_checkudata(L, 1, "AudioData");
   const char *idx = luaL_checkstring(L, 2);
+  const char *val = luaL_checkstring(L, 3);
 
-  if (lua_isnumber(L, 3)) {
-    int val = lua_tonumber(L, 3);
-    if (!strcmp(idx, "year"))
-      taglib_tag_set_year(ad->tag, val);
-    else if (!strcmp(idx, "track"))
-      taglib_tag_set_track(ad->tag, val);
-  }
-  else if (lua_isstring(L, 3)) {
-    const char *val = lua_tostring(L, 3);
-    if (!strcmp(idx, "title"))
-      taglib_tag_set_title(ad->tag, val);
-    else if (!strcmp(idx, "artist"))
-      taglib_tag_set_artist(ad->tag, val);
-    else if (!strcmp(idx, "album"))
-      taglib_tag_set_album(ad->tag, val);
-    else if (!strcmp(idx, "comment"))
-      taglib_tag_set_comment(ad->tag, val);
-    else if (!strcmp(idx, "genre"))
-      taglib_tag_set_genre(ad->tag, val);
-  }
+  if (!strcmp(idx, "title"))
+    taglib_tag_set_title(ad->tag, val);
+  else if (!strcmp(idx, "artist"))
+    taglib_tag_set_artist(ad->tag, val);
+  else if (!strcmp(idx, "album"))
+    taglib_tag_set_album(ad->tag, val);
+  else if (!strcmp(idx, "comment"))
+    taglib_tag_set_comment(ad->tag, val);
+  else if (!strcmp(idx, "genre"))
+    taglib_tag_set_genre(ad->tag, val);
+  else if (!strcmp(idx, "year"))
+    taglib_tag_set_year(ad->tag, luaL_checkinteger(L, 3));
+  else if (!strcmp(idx, "track")) 
+    taglib_tag_set_track(ad->tag, luaL_checkinteger(L, 3));
   else
     return luaL_error(L, "bad argument #3 to 'newindex'");
 
@@ -82,10 +72,7 @@ static int audiodata_newindex(lua_State *L) {
 }
 
 static int ltaglib_close(lua_State *L) {
-  AudioData *ad = (AudioData *)lua_touserdata(L, 1);
-  if (ad == NULL) {
-    return luaL_error(L, "bad argument #1 to 'close'");
-  }
+  AudioData *ad = luaL_checkudata(L, 1, "AudioData");
   lua_pushnil(L);
   lua_setmetatable(L, 1);
   taglib_tag_free_strings(); // make sure this is right
@@ -94,10 +81,7 @@ static int ltaglib_close(lua_State *L) {
 }
 
 static int ltaglib_save(lua_State *L) {
-  AudioData *ad = (AudioData *)lua_touserdata(L, 1);
-  if (ad == NULL) {
-    return luaL_error(L, "bad argument #1 to 'save'");
-  }
+  AudioData *ad = luaL_checkudata(L, 1, "AudioData");
   lua_pushboolean(L, taglib_file_save(ad->file));
   return 1;
 }
@@ -123,7 +107,7 @@ static int ltaglib_open(lua_State *L) {
   AudioData *ad = (AudioData *)lua_newuserdata(L, sizeof(AudioData));
   ad->file = file, ad->tag = tag, ad->props = props;
 
-  lua_newtable(L);
+  luaL_newmetatable(L, "AudioData");
   lua_pushcfunction(L, audiodata_index);
   lua_setfield(L, 3, "__index");
   lua_pushcfunction(L, audiodata_newindex);
