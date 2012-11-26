@@ -29,6 +29,7 @@ static int audiodata_index(lua_State *L) {
     lua_pushinteger(L, taglib_tag_year(ad->tag));
   else if (!strcmp(idx, "track"))
     lua_pushinteger(L, taglib_tag_track(ad->tag));
+
   // properties
   else if (!strcmp(idx, "length"))
     lua_pushinteger(L, taglib_audioproperties_length(ad->props));
@@ -38,6 +39,7 @@ static int audiodata_index(lua_State *L) {
     lua_pushinteger(L, taglib_audioproperties_samplerate(ad->props));
   else if (!strcmp(idx, "channels"))
     lua_pushinteger(L, taglib_audioproperties_channels(ad->props));
+
   // nothing
   else
     lua_pushnil(L);
@@ -45,7 +47,6 @@ static int audiodata_index(lua_State *L) {
   return 1;
 }
 
-// this seems unnecessarily ugly 
 static int audiodata_newindex(lua_State *L) {
   AudioData *ad = luaL_checkudata(L, 1, "AudioData");
   const char *idx = luaL_checkstring(L, 2);
@@ -75,7 +76,7 @@ static int ltaglib_close(lua_State *L) {
   AudioData *ad = luaL_checkudata(L, 1, "AudioData");
   lua_pushnil(L);
   lua_setmetatable(L, 1);
-  taglib_tag_free_strings(); // make sure this is right
+  taglib_tag_free_strings(); // ??
   taglib_file_free(ad->file);
   return 0;
 }
