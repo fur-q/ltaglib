@@ -7,8 +7,23 @@
 typedef struct AudioData {
   TagLib_File *file;
   TagLib_Tag *tag;
-  TagLib_AudioProperties *props;
+  const TagLib_AudioProperties *props;
 } AudioData;
+
+static int ltaglib_save(lua_State *L) {
+  AudioData *ad = luaL_checkudata(L, 1, "AudioData");
+  lua_pushboolean(L, taglib_file_save(ad->file));
+  return 1;
+}
+
+static int ltaglib_close(lua_State *L) {
+  AudioData *ad = luaL_checkudata(L, 1, "AudioData");
+  lua_pushnil(L);
+  lua_setmetatable(L, 1);
+  taglib_tag_free_strings(); // ??
+  taglib_file_free(ad->file);
+  return 0;
+}
 
 static int audiodata_index(lua_State *L) {
   AudioData *ad = luaL_checkudata(L, 1, "AudioData");
@@ -39,6 +54,12 @@ static int audiodata_index(lua_State *L) {
     lua_pushinteger(L, taglib_audioproperties_samplerate(ad->props));
   else if (!strcmp(idx, "channels"))
     lua_pushinteger(L, taglib_audioproperties_channels(ad->props));
+
+  // functions
+  else if (!strcmp(idx, "save"))
+    lua_pushcfunction(L, ltaglib_save);
+  else if (!strcmp(idx, "close"))
+    lua_pushcfunction(L, ltaglib_close);
 
   // nothing
   else
@@ -72,21 +93,6 @@ static int audiodata_newindex(lua_State *L) {
   return 0;
 }
 
-static int ltaglib_close(lua_State *L) {
-  AudioData *ad = luaL_checkudata(L, 1, "AudioData");
-  lua_pushnil(L);
-  lua_setmetatable(L, 1);
-  taglib_tag_free_strings(); // ??
-  taglib_file_free(ad->file);
-  return 0;
-}
-
-static int ltaglib_save(lua_State *L) {
-  AudioData *ad = luaL_checkudata(L, 1, "AudioData");
-  lua_pushboolean(L, taglib_file_save(ad->file));
-  return 1;
-}
-
 static int ltaglib_open(lua_State *L) {
   const char *path = luaL_checkstring(L, 1);
   TagLib_File *file = taglib_file_new(path);
@@ -97,7 +103,7 @@ static int ltaglib_open(lua_State *L) {
   }
 
   TagLib_Tag *tag = taglib_file_tag(file);
-  TagLib_AudioProperties *props = taglib_file_audioproperties(file);
+  const TagLib_AudioProperties *props = taglib_file_audioproperties(file);
 
   if (tag == NULL) {
     lua_pushnil(L);

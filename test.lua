@@ -16,8 +16,8 @@ f.track  = 64
 assert(f.artist == "best artist")
 assert(f.track  == 64)
 
-taglib.save(f)
-taglib.close(f)
+f:save()
+f:close()
 
 local f = taglib.open "test.mp3" 
 
