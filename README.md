@@ -29,7 +29,3 @@ f:save()
 -- close the file (or just wait for it to be GC'd)
 f:close()
 ```
-
-## License
-
-TagLib is released under the LGPL; as such, so is ltaglib.
