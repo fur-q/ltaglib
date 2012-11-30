@@ -6,7 +6,7 @@ CFLAGS  = -fPIC -Wall $(LUA_I) $(TAG_I)
 LDFLAGS = $(TAG_L)
 
 ltaglib.so: ltaglib.c
-	gcc -shared $(CFLAGS) $(LDFLAGS) -o $@ $^
+	$(CC) -shared $(CFLAGS) $(LDFLAGS) -o $@ $^
 
 clean:
 	-rm ltaglib.so
